@@ -2,15 +2,13 @@ import numpy as np
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
 
 from xgboost import XGBRegressor
 
 
-def split_data_train_val_test(df, features, target,
-                              train_size=0.6, val_size=0.2, test_size=0.2,
-                              random_state=42):
+def split_data_train_val_test(df, features, target, train_size=0.6, val_size=0.2, test_size=0.2, random_state=42):
     """
     Deli podatke na train/val/test u odnosu 60/20/20
     """
@@ -21,6 +19,7 @@ def split_data_train_val_test(df, features, target,
     x_train, x_temp, y_train, y_temp = train_test_split(
         x, y,
         test_size=(1.0 - train_size),
+        shuffle=True,
         random_state=random_state
     )
 
@@ -28,15 +27,13 @@ def split_data_train_val_test(df, features, target,
     x_val, x_test, y_val, y_test = train_test_split(
         x_temp, y_temp,
         test_size=(test_size / (val_size + test_size)),
+        shuffle=True,
         random_state=random_state
     )
 
     return x_train, x_val, x_test, y_train, y_val, y_test
 
 
-# --------------------------------------------------
-# Treniranje modela
-# --------------------------------------------------
 
 def train_random_forest(X_train, y_train, random_state=42):
     """
@@ -71,29 +68,14 @@ def train_xgboost(X_train, y_train, random_state=42):
     model.fit(X_train, y_train)
     return model
 
-
-# --------------------------------------------------
-# Evaluacija modela
-# --------------------------------------------------
-
-def evaluate_regression_model(model, X_test, y_test):
+def train_linear_regression(X_train, y_train):
     """
-    Računa MAE i RMSE metrike za regresioni model.
+    Treniranje osnovnog linearnog regresionog modela
     """
-    y_pred = model.predict(X_test)
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+    return model
 
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-
-    return {
-        "MAE": mae,
-        "RMSE": rmse
-    }
-
-
-# --------------------------------------------------
-# Feature importance (jako korisno za rad)
-# --------------------------------------------------
 
 def get_feature_importance(model, feature_names):
     """
