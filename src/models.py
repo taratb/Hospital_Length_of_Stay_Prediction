@@ -8,22 +8,30 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 
 
-# --------------------------------------------------
-# Podela na train / test
-# --------------------------------------------------
-
-def split_data(df, features, target, test_size=0.2, random_state=42):
+def split_data_train_val_test(df, features, target,
+                              train_size=0.6, val_size=0.2, test_size=0.2,
+                              random_state=42):
     """
-    Deli podatke na trening i test skup.
+    Deli podatke na train/val/test u odnosu 60/20/20
     """
-    X = df[features]
+    x = df[features]
     y = df[target]
 
-    return train_test_split(
-        X, y,
-        test_size=test_size,
+    # Train (60%) i temp (40%)
+    x_train, x_temp, y_train, y_temp = train_test_split(
+        x, y,
+        test_size=(1.0 - train_size),
         random_state=random_state
     )
+
+    # Temp (40%) delimo na val (20%) i test (20%)
+    x_val, x_test, y_val, y_test = train_test_split(
+        x_temp, y_temp,
+        test_size=(test_size / (val_size + test_size)),
+        random_state=random_state
+    )
+
+    return x_train, x_val, x_test, y_train, y_val, y_test
 
 
 # --------------------------------------------------
