@@ -1,8 +1,14 @@
 import matplotlib.pyplot as plt
-from src.load_data import load_data
+import pandas as pd
 from src.eda import *
+from src.models import *
+from src.evaluation import *
 from src.preprocessing import *
 from src.clustering import *
+
+def load_data(path):
+    df = pd.read_csv(path)
+    return df
 
 def main():
     RUN_PLOTS = False
@@ -27,7 +33,7 @@ def main():
 #______________________________________________________________________________________
 
     #provera nedostajucih vrednosti
-    print(missing_values(df))
+    #print(missing_values(df))
 
     df = drop_non_informative_columns(df)
     df = encode_categorical_features(df)
@@ -83,30 +89,48 @@ def main():
 # podela na klastere
 #______________________________________________________________________________________
 
-
     cluster_features = [
-        'creatinine',
-        'bloodureanitro',
-        'glucose',
-        'sodium',
-        'hematocrit',
-        'bmi',
-        'pulse',
-        'respiration',
-        'lengthofstay'
+        'creatinine', 'bloodureanitro', 'glucose', 'sodium',
+        'hematocrit', 'bmi', 'pulse', 'respiration', 'lengthofstay'
     ]
 
-    X = prepare_clustering_data(df, cluster_features)
-    X_scaled, _ = scale_features(X)
-
-    elbow_df = compute_elbow(X_scaled, k_min=2, k_max=8)
-    print(elbow_df)
-
-    labels, _ = fit_kmeans(X_scaled, n_clusters=3)
-
-    summary = cluster_summary(X, labels)
+    _, _, summary = run_clustering(df, cluster_features, n_clusters=3)
     print(summary)
 
-    plot_clusters_pca(X_scaled, labels)
+    
+
+#______________________________________________________________________________________
+# modeli
+#______________________________________________________________________________________
+
+    features = [col for col in df.columns if col != 'lengthofstay']
+
+    x_train, x_val, x_test, y_train, y_val, y_test = split_data_train_val_test(
+        df, features, target='lengthofstay'
+    )
+
+    # Linearna regresija
+    lr_model = train_linear_regression(x_train, y_train)
+    print("\nLinearna regresija — val skup:")
+    print(evaluate_model(lr_model, x_val, y_val))
+    print("Reziduali (val):")
+    print(residual_summary(y_val, lr_model.predict(x_val)))
+
+    # Random Forest
+    rf_model = train_random_forest(x_train, y_train)
+    print("\nRandom Forest — val skup:")
+    print(evaluate_model(rf_model, x_val, y_val))
+
+    # XGBoost
+    xgb_model = train_xgboost(x_train, y_train, x_val, y_val)
+    print("\nXGBoost — val skup:")
+    print(evaluate_model(xgb_model, x_val, y_val))
+
+    # Finalna evaluacija na test skupu
+    print("\n=== FINALNA EVALUACIJA (test skup) ===")
+    print("Linearna regresija:", evaluate_model(lr_model, x_test, y_test))
+    print("Random Forest:     ", evaluate_model(rf_model, x_test, y_test))
+    print("XGBoost:           ", evaluate_model(xgb_model, x_test, y_test))
+
 if __name__ == '__main__':
     main()

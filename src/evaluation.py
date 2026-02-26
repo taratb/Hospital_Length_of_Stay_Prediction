@@ -1,15 +1,14 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn.metrics import(
     mean_absolute_error,
-    mean_squared_error,
-    r2_score
+    mean_squared_error
 )
 
 def regression_metrics(y_true, y_pred):
 
     return {
-        "R2": r2_score(y_true, y_pred),
         "MAE": mean_absolute_error(y_true, y_pred),
         "RMSE": float(np.sqrt(mean_squared_error(y_true, y_pred)))
     }
@@ -34,3 +33,32 @@ def residual_summary(y_true, y_pred):
         "residual_min": float(np.min(e)),
         "residual_max": float(np.max(e)),
     }
+
+def plot_residuals(y_true, y_pred, title="Analiza reziduala"):
+    """
+    Prikazuje dva grafika:
+    - Reziduali vs predvidjene vrednosti
+    - Histogram reziduala (provera normalnosti)
+    """
+    e = residuals(y_true, y_pred)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4))
+
+    # Reziduali vs predviđene vrednosti
+    axes[0].scatter(y_pred, e, alpha=0.3, s=5)
+    axes[0].axhline(0, color='red', linestyle='--')
+    axes[0].set_xlabel("Predviđene vrednosti")
+    axes[0].set_ylabel("Reziduali")
+    axes[0].set_title(f"{title} — reziduali vs predviđene vrednosti")
+
+    # Histogram reziduala
+    axes[1].hist(e, bins=50, edgecolor='black')
+    axes[1].axvline(0, color='red', linestyle='--')
+    axes[1].set_xlabel("Rezidual")
+    axes[1].set_ylabel("Frekvencija")
+    axes[1].set_title(f"{title} — distribucija reziduala")
+
+    plt.tight_layout()
+    plt.show()
+
+    

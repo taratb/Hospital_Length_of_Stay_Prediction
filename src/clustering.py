@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.metrics import silhouette_score
 
 # --------------------------------------------------
 # Priprema podataka za klasterizaciju
@@ -113,3 +114,61 @@ def plot_clusters_pca(X_scaled, labels):
     plt.show()
 
     return pca.explained_variance_ratio_
+
+def plot_elbow(elbow_df):
+
+    plt.figure(figsize=(7, 4))
+    plt.plot(elbow_df['k'], elbow_df['inertia'], marker='o')
+    plt.xlabel('Broj klastera (k)')
+    plt.ylabel('Inertia')
+    plt.title('Elbow metoda — optimalan broj klastera')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
+
+def run_clustering(df, features, n_clusters=3, k_min=2, k_max=8):
+    """
+    Objedinjuje ceo tok klasterizacije:
+    - priprema i skaliranje podataka
+    - Elbow metoda
+    - treniranje K-Means
+    - summary klastera
+    - PCA vizualizacija
+    """
+    X = prepare_clustering_data(df, features)
+    X_scaled, _ = scale_features(X)
+
+    elbow_df = compute_elbow(X_scaled, k_min=k_min, k_max=k_max)
+    plot_elbow(elbow_df)
+
+    labels, _ = fit_kmeans(X_scaled, n_clusters=n_clusters)
+
+    summary = cluster_summary(X, labels)
+    plot_clusters_pca(X_scaled, labels)
+
+    return X, labels, summary
+
+def compute_silhouette(X_scaled, k_min=2, k_max=8):
+    """
+    Racuna Silhouette score za razlicite vrednosti k.
+    Vraca DataFrame sa kolonama k i silhouette_score.
+    """
+    scores = []
+    for k in range(k_min, k_max + 1):
+        labels, _ = fit_kmeans(X_scaled, n_clusters=k)
+        score = silhouette_score(X_scaled, labels)
+        scores.append({'k': k, 'silhouette_score': score})
+    return pd.DataFrame(scores)
+
+def plot_silhouette(silhouette_df):
+    """
+    Prikazuje Silhouette score grafik.
+    """
+    plt.figure(figsize=(7, 4))
+    plt.plot(silhouette_df['k'], silhouette_df['silhouette_score'], marker='o', color='orange')
+    plt.xlabel('Broj klastera (k)')
+    plt.ylabel('Silhouette Score')
+    plt.title('Silhouette metoda — optimalan broj klastera')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()

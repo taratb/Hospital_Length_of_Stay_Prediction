@@ -1,5 +1,5 @@
-import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
@@ -51,9 +51,9 @@ def train_random_forest(X_train, y_train, random_state=42):
     return model
 
 
-def train_xgboost(X_train, y_train, random_state=42):
+def train_xgboost(X_train, y_train, X_val, y_val, random_state=42):
     """
-    Treniranje XGBoost regresionog modela.
+    Treniranje XGBoost regresionog modela
     """
     model = XGBRegressor(
         n_estimators=300,
@@ -63,9 +63,14 @@ def train_xgboost(X_train, y_train, random_state=42):
         colsample_bytree=0.8,
         objective='reg:squarederror',
         random_state=random_state,
-        n_jobs=-1
+        n_jobs=-1,
+        early_stopping_rounds=20
     )
-    model.fit(X_train, y_train)
+    model.fit(
+        X_train, y_train,
+        eval_set=[(X_val, y_val)],
+        verbose=False
+    )
     return model
 
 def train_linear_regression(X_train, y_train):
@@ -92,3 +97,15 @@ def get_feature_importance(model, feature_names):
         .sort_values("importance", ascending=False)
         .reset_index(drop=True)
     )
+
+def plot_feature_importance(model, feature_names, title, top_n=15):
+    
+    fi = get_feature_importance(model, feature_names)
+    fi_top = fi.head(top_n)
+
+    plt.figure(figsize=(8, 6))
+    plt.barh(fi_top['feature'][::-1], fi_top['importance'][::-1])
+    plt.xlabel("Importance")
+    plt.title(title)
+    plt.tight_layout()
+    plt.show()
