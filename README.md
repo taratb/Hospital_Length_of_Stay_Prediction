@@ -12,6 +12,7 @@ Hospital Length of Stay Dataset (https://www.kaggle.com/datasets/aayushchou/hosp
 - XGBoost
 
 ## Evaluacija
+- MSE
 - RMSE
 
 ## Specifikacija projekta
